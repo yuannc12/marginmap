@@ -1,106 +1,106 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import type { Settings, PricingStrategy } from '../types';
-import { STRATEGY_LABELS } from '../types';
+import { ModeToggle } from './ModeToggle';
+import type { Settings, CostEntry } from '../types';
+import { CURRENCY_SYMBOLS } from '../types';
 
 interface SettingsPanelProps {
   settings: Settings;
   onUpdate: (updates: Partial<Settings>) => void;
+  onAddCost: (cost: Omit<CostEntry, 'id'>) => void;
+  onUpdateCost: (id: string, updates: Partial<CostEntry>) => void;
+  onRemoveCost: (id: string) => void;
 }
 
-export function SettingsPanel({ settings, onUpdate }: SettingsPanelProps) {
-  const [expanded, setExpanded] = useState(true);
+export function SettingsPanel({ settings, onUpdate, onAddCost, onUpdateCost, onRemoveCost }: SettingsPanelProps) {
+  const sym = CURRENCY_SYMBOLS[settings.currency] || settings.currency;
 
   return (
-    <section className="px-8 py-8 section-border">
-      <button
-        className="flex items-center gap-2 w-full text-left mb-6"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        onClick={() => setExpanded(!expanded)}
-      >
-        {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        <span className="label-mono">Global Settings</span>
-      </button>
+    <section className="section">
+      <div className="page-shell">
+        <div className="section-label">01</div>
+        <div className="section-title">Settings</div>
+        <div className="section-desc">
+          Configure tax rates, overhead costs, and currency. These apply globally across all products and scenarios.
+        </div>
 
-      {expanded && (
-        <div className="grid grid-cols-2 gap-6 motion-fade-up" style={{ maxWidth: '640px' }}>
-          {/* Tax Rate */}
-          <div className="flex flex-col gap-1">
-            <label className="label-mono" style={{ fontSize: '0.625rem' }}>Tax Rate (%)</label>
-            <input
-              type="number"
-              value={settings.taxRate}
-              onChange={(e) => onUpdate({ taxRate: Number(e.target.value) })}
-              min={0}
-              max={100}
-              step={0.5}
-            />
-          </div>
-
-          {/* Platform Fee */}
-          <div className="flex flex-col gap-1">
-            <label className="label-mono" style={{ fontSize: '0.625rem' }}>Platform Fee (%)</label>
-            <input
-              type="number"
-              value={settings.platformFee}
-              onChange={(e) => onUpdate({ platformFee: Number(e.target.value) })}
-              min={0}
-              max={100}
-              step={0.5}
-            />
-          </div>
-
-          {/* Currency */}
-          <div className="flex flex-col gap-1">
-            <label className="label-mono" style={{ fontSize: '0.625rem' }}>Currency</label>
-            <select
-              value={settings.currency}
-              onChange={(e) => onUpdate({ currency: e.target.value })}
-            >
-              <option value="EUR">EUR</option>
-              <option value="USD">USD</option>
-              <option value="GBP">GBP</option>
-              <option value="JPY">JPY</option>
-            </select>
-          </div>
-
-          {/* Forecast Period */}
-          <div className="flex flex-col gap-1">
-            <label className="label-mono" style={{ fontSize: '0.625rem' }}>Forecast (months)</label>
-            <input
-              type="number"
-              value={settings.forecastMonths}
-              onChange={(e) => onUpdate({ forecastMonths: Number(e.target.value) })}
-              min={1}
-              max={60}
-            />
-          </div>
-
-          {/* Pricing Strategy */}
-          <div className="flex flex-col gap-1 col-span-2">
-            <label className="label-mono" style={{ fontSize: '0.625rem' }}>Pricing Strategy</label>
-            <div className="flex gap-2 flex-wrap">
-              {(Object.keys(STRATEGY_LABELS) as PricingStrategy[]).map((key) => (
-                <button
-                  key={key}
-                  className="btn btn--sm"
-                  style={{
-                    background: settings.strategy === key ? 'var(--accent-blue)' : 'transparent',
-                    color: settings.strategy === key ? 'var(--text-primary)' : 'var(--text-muted)',
-                    borderColor: settings.strategy === key ? 'var(--accent-blue)' : 'var(--border)',
-                  }}
-                  onClick={() => onUpdate({ strategy: key })}
-                >
-                  {STRATEGY_LABELS[key].name}
-                </button>
-              ))}
+        <div className="card motion-fade-up">
+          {/* Tax + Currency row */}
+          <div className="flex gap-12 mb-8" style={{ flexWrap: 'wrap' }}>
+            <div className="field" style={{ minWidth: 160 }}>
+              <div className="field-label">Tax Rate</div>
+              <div className="field-row">
+                <input
+                  type="number"
+                  value={settings.taxRate}
+                  onChange={(e) => onUpdate({ taxRate: Number(e.target.value) })}
+                  min={0}
+                  style={{ width: 80 }}
+                />
+                <ModeToggle mode={settings.taxMode} onChange={(m) => onUpdate({ taxMode: m })} />
+              </div>
             </div>
-            <span style={{ color: 'var(--text-faint)', fontSize: '0.75rem', marginTop: '4px' }}>
-              {STRATEGY_LABELS[settings.strategy].description}
-            </span>
+
+            <div className="field" style={{ minWidth: 100 }}>
+              <div className="field-label">Currency</div>
+              <select
+                value={settings.currency}
+                onChange={(e) => onUpdate({ currency: e.target.value })}
+                style={{ width: 80 }}
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Overhead Costs */}
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 20 }}>
+            <div className="field-label" style={{ marginBottom: 16 }}>Overhead Costs</div>
+
+            {settings.overheadCosts.map((cost) => (
+              <div key={cost.id} className="cost-row">
+                <input
+                  type="text"
+                  value={cost.name}
+                  onChange={(e) => onUpdateCost(cost.id, { name: e.target.value })}
+                  placeholder="Cost name"
+                  style={{ flex: 1, border: 'none', background: 'transparent', padding: 0, fontSize: '0.8125rem' }}
+                />
+                <div className="field-row">
+                  <div className="relative">
+                    {cost.mode === 'dollar' && (
+                      <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: '0.75rem' }}>{sym}</span>
+                    )}
+                    <input
+                      type="number"
+                      value={cost.value}
+                      onChange={(e) => onUpdateCost(cost.id, { value: Number(e.target.value) })}
+                      min={0}
+                      style={{ width: 100, paddingLeft: cost.mode === 'dollar' ? 22 : 10 }}
+                    />
+                  </div>
+                  <ModeToggle mode={cost.mode} onChange={(m) => onUpdateCost(cost.id, { mode: m })} />
+                  <button
+                    className="btn--danger"
+                    onClick={() => onRemoveCost(cost.id)}
+                    style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', cursor: 'pointer', background: 'none', border: 'none' }}
+                  >
+                    &times;
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              className="btn btn--ghost"
+              onClick={() => onAddCost({ name: '', value: 0, mode: 'dollar' })}
+              style={{ marginTop: 8, fontSize: '0.5625rem' }}
+            >
+              + Add overhead cost
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </section>
   );
 }

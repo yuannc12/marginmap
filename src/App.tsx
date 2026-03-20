@@ -2,10 +2,9 @@ import { useRef, useState, useEffect } from 'react';
 import { TopBar } from './components/TopBar';
 import { Hero } from './components/Hero';
 import { SettingsPanel } from './components/SettingsPanel';
-import { ProductTable } from './components/ProductTable';
-import { CashFlowChart } from './components/CashFlowChart';
+import { ProductCards } from './components/ProductCards';
+import { SankeyChart } from './components/SankeyChart';
 import { ScenarioBuilder } from './components/ScenarioBuilder';
-import { ResultsDashboard } from './components/ResultsDashboard';
 import { useStore } from './store/useStore';
 import { exportToJson, importFromJson, decodeStateFromUrl } from './utils/sharing';
 
@@ -14,12 +13,10 @@ export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
-  // Check for URL-encoded state on mount
   useEffect(() => {
     const urlState = decodeStateFromUrl();
     if (urlState) {
       store.importState(urlState);
-      // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,19 +55,21 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <TopBar
-        onOpenSettings={scrollToMain}
-        onExport={handleExport}
-        onImport={handleImport}
-      />
-
       <Hero onStart={scrollToMain} />
 
       <div ref={mainRef}>
+        <TopBar onExport={handleExport} onImport={handleImport} />
+
         {importError && (
           <div
-            className="px-8 py-3"
-            style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}
+            className="page-shell"
+            style={{
+              padding: '12px 24px',
+              background: 'rgba(196, 74, 74, 0.08)',
+              color: 'var(--danger)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.6875rem',
+            }}
           >
             {importError}
           </div>
@@ -79,46 +78,54 @@ export default function App() {
         <SettingsPanel
           settings={store.settings}
           onUpdate={store.updateSettings}
+          onAddCost={store.addOverheadCost}
+          onUpdateCost={store.updateOverheadCost}
+          onRemoveCost={store.removeOverheadCost}
         />
 
-        <ProductTable
+        <ProductCards
           products={store.products}
           settings={store.settings}
           onAdd={store.addProduct}
           onUpdate={store.updateProduct}
           onDelete={store.deleteProduct}
+          onAddCost={store.addProductCost}
+          onRemoveCost={store.removeProductCost}
         />
 
-        <CashFlowChart
+        <SankeyChart
           products={store.products}
           settings={store.settings}
           scenarios={store.scenarios}
         />
 
         <ScenarioBuilder
+          products={store.products}
+          settings={store.settings}
           scenarios={store.scenarios}
           onAdd={store.addScenario}
           onUpdate={store.updateScenario}
           onDelete={store.deleteScenario}
-        />
-
-        <ResultsDashboard
-          products={store.products}
-          settings={store.settings}
-          scenarios={store.scenarios}
+          onUpsertOverride={store.upsertProductOverride}
+          onRemoveOverride={store.removeProductOverride}
         />
 
         {/* Footer */}
         <footer
-          className="px-8 py-6 flex items-center justify-between"
-          style={{ borderTop: '1px solid var(--border)', marginTop: '2rem' }}
+          className="page-shell flex items-center justify-between"
+          style={{
+            padding: '24px',
+            borderTop: '1px solid var(--border)',
+            marginTop: 24,
+          }}
         >
-          <span style={{ color: 'var(--text-faint)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ color: 'var(--text-faint)', fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
             MarginMap by yuann.cc
           </span>
           <button
-            className="btn btn--outline btn--sm"
+            className="btn btn--outline"
             onClick={store.loadSampleData}
+            style={{ fontSize: '0.5625rem' }}
           >
             Load Sample Data
           </button>

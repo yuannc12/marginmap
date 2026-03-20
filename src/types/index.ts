@@ -1,57 +1,86 @@
+export interface CostEntry {
+  id: string;
+  name: string;
+  value: number;
+  mode: 'percent' | 'dollar';
+}
+
 export interface Product {
   id: string;
   name: string;
-  unitCost: number;
-  salePrice: number;
-  unitsPerMonth: number;
-  fixedCosts: number;
+  description: string;
+  pricePerUnit: number;
+  quantity: number;
+  cogs: number;
+  cogsMode: 'percent' | 'dollar';
+  transportation: number;
+  transportMode: 'percent' | 'dollar';
+  otherCosts: CostEntry[];
 }
 
 export interface Settings {
   taxRate: number;
-  platformFee: number;
+  taxMode: 'percent' | 'dollar';
+  overheadCosts: CostEntry[];
   currency: string;
-  forecastMonths: number;
-  strategy: PricingStrategy;
 }
 
-export type PricingStrategy = 'custom' | 'cost-plus' | 'value-based' | 'competitive';
+export interface ProductOverride {
+  productId: string;
+  priceAdjustment: number;
+  priceAdjustMode: 'percent' | 'dollar';
+  sellThrough: number; // 0-100%
+}
 
 export interface Scenario {
   id: string;
   name: string;
-  priceMultiplier: number;
-  costMultiplier: number;
-  volumeMultiplier: number;
+  // Global defaults (applied to products without an override)
+  priceAdjustment: number;
+  priceAdjustMode: 'percent' | 'dollar';
+  sellThrough: number; // 0-100%
+  // Per-product overrides
+  productOverrides: ProductOverride[];
 }
 
 export interface ProductResult {
   productId: string;
+  name: string;
   revenue: number;
-  cogs: number;
+  cogsTotal: number;
+  transportTotal: number;
+  otherCostsTotal: number;
   grossProfit: number;
   marginPercent: number;
-  breakeven: number;
-  netProfit: number;
 }
 
-export interface ScenarioResult {
+export interface SimulationResult {
   scenarioId: string;
-  totalRevenue: number;
-  totalCosts: number;
-  totalProfit: number;
-  avgMargin: number;
   products: ProductResult[];
-  cashFlow: CashFlowPoint[];
+  totalRevenue: number;
+  totalCOGS: number;
+  totalTransport: number;
+  totalProductOther: number;
+  grossProfit: number;
+  overheadCosts: { name: string; value: number }[];
+  totalOverhead: number;
+  preTaxProfit: number;
+  tax: number;
+  netProfit: number;
+  margin: number;
 }
 
-export interface CashFlowPoint {
-  month: number;
-  label: string;
-  revenue: number;
-  costs: number;
-  profit: number;
-  cumulative: number;
+// Sankey node/link types
+export interface SankeyNode {
+  name: string;
+  color: string;
+}
+
+export interface SankeyLink {
+  source: number;
+  target: number;
+  value: number;
+  color: string;
 }
 
 export interface AppState {
@@ -62,62 +91,65 @@ export interface AppState {
 
 export const DEFAULT_SETTINGS: Settings = {
   taxRate: 21,
-  platformFee: 0,
+  taxMode: 'percent',
+  overheadCosts: [
+    { id: 'ops', name: 'Operations', value: 2000, mode: 'dollar' },
+    { id: 'mkt', name: 'Marketing', value: 500, mode: 'dollar' },
+    { id: 'rent', name: 'Office Rental', value: 1000, mode: 'dollar' },
+    { id: 'tools', name: 'Digital Tools', value: 300, mode: 'dollar' },
+  ],
   currency: 'EUR',
-  forecastMonths: 12,
-  strategy: 'custom',
 };
 
 export const SAMPLE_PRODUCTS: Product[] = [
   {
     id: '1',
-    name: 'SaaS Pro Plan',
-    unitCost: 12,
-    salePrice: 49,
-    unitsPerMonth: 200,
-    fixedCosts: 2400,
+    name: 'Black Box S',
+    description: 'Compact starter kit',
+    pricePerUnit: 120,
+    quantity: 100,
+    cogs: 30,
+    cogsMode: 'dollar',
+    transportation: 0,
+    transportMode: 'dollar',
+    otherCosts: [],
   },
   {
     id: '2',
-    name: 'API Credits Bundle',
-    unitCost: 0.8,
-    salePrice: 5,
-    unitsPerMonth: 1500,
-    fixedCosts: 800,
+    name: 'Black Box M',
+    description: 'Standard edition',
+    pricePerUnit: 200,
+    quantity: 80,
+    cogs: 50,
+    cogsMode: 'dollar',
+    transportation: 10,
+    transportMode: 'dollar',
+    otherCosts: [],
   },
   {
     id: '3',
-    name: 'Enterprise License',
-    unitCost: 250,
-    salePrice: 1200,
-    unitsPerMonth: 8,
-    fixedCosts: 1200,
-  },
-  {
-    id: '4',
-    name: 'Onboarding Package',
-    unitCost: 80,
-    salePrice: 350,
-    unitsPerMonth: 15,
-    fixedCosts: 500,
+    name: 'Black Box XL',
+    description: 'Premium bundle',
+    pricePerUnit: 450,
+    quantity: 40,
+    cogs: 120,
+    cogsMode: 'dollar',
+    transportation: 25,
+    transportMode: 'dollar',
+    otherCosts: [],
   },
 ];
 
-export const DEFAULT_SCENARIOS: Scenario[] = [
-  { id: 'baseline', name: 'Baseline', priceMultiplier: 1, costMultiplier: 1, volumeMultiplier: 1 },
-  { id: 'growth', name: 'Growth (+20% vol)', priceMultiplier: 1, costMultiplier: 1, volumeMultiplier: 1.2 },
-];
+export const DEFAULT_SCENARIOS: Scenario[] = [];
+
+export const EMPTY_OVERRIDE: Omit<ProductOverride, 'productId'> = {
+  priceAdjustment: 0,
+  priceAdjustMode: 'percent',
+  sellThrough: 100,
+};
 
 export const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: '\u20AC',
   USD: '$',
   GBP: '\u00A3',
-  JPY: '\u00A5',
-};
-
-export const STRATEGY_LABELS: Record<PricingStrategy, { name: string; description: string }> = {
-  custom: { name: 'Custom', description: 'Set your own prices' },
-  'cost-plus': { name: 'Cost-Plus', description: 'Unit cost + fixed markup %' },
-  'value-based': { name: 'Value-Based', description: 'Price based on perceived value' },
-  competitive: { name: 'Competitive', description: 'Match or undercut market rates' },
 };
