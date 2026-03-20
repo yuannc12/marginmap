@@ -3,7 +3,7 @@ import type { Product, Settings, Scenario, CostEntry, AppState, ProductOverride 
 import { DEFAULT_SETTINGS, SAMPLE_PRODUCTS, DEFAULT_SCENARIOS } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_KEY = 'marginmap-data';
+const STORAGE_KEY = 'marginmap-v4';
 
 function isValidState(data: unknown): data is AppState {
   if (!data || typeof data !== 'object') return false;

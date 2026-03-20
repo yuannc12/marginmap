@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ModeToggle } from './ModeToggle';
 import type { Product, Settings, Scenario, SimulationResult, ProductOverride } from '../types';
-import { CURRENCY_SYMBOLS, EMPTY_OVERRIDE } from '../types';
+import { SYM, EMPTY_OVERRIDE } from '../types';
 import { simulate, formatCurrency } from '../utils/calculations';
 
 interface ScenarioBuilderProps {
@@ -20,7 +20,7 @@ const BASELINE_SCENARIO: Scenario = {
   name: 'Current',
   priceAdjustment: 0,
   priceAdjustMode: 'percent',
-  sellThrough: 100,
+  sellThrough: null as unknown as number, // null = use each product's baseline sell-through
   productOverrides: [],
 };
 
@@ -34,7 +34,7 @@ export function ScenarioBuilder({
   onUpsertOverride,
   onRemoveOverride,
 }: ScenarioBuilderProps) {
-  const sym = CURRENCY_SYMBOLS[settings.currency] || settings.currency;
+  const sym = SYM;
 
   const baseline = useMemo(() => simulate(products, settings, BASELINE_SCENARIO), [products, settings]);
 
@@ -358,18 +358,19 @@ function ComparisonTable({
     },
     {
       label: 'Gross Profit',
-      format: (r) => formatCurrency(r.grossProfit, sym),
+      format: (r) => {
+        const pct = r.totalRevenue > 0 ? ((r.grossProfit / r.totalRevenue) * 100).toFixed(1) : '0.0';
+        return `${formatCurrency(r.grossProfit, sym)}  (${pct}%)`;
+      },
       deltaFn: (r, b) => r.grossProfit - b.grossProfit,
     },
     {
       label: 'Net Profit',
-      format: (r) => formatCurrency(r.netProfit, sym),
+      format: (r) => {
+        const pct = r.totalRevenue > 0 ? ((r.netProfit / r.totalRevenue) * 100).toFixed(1) : '0.0';
+        return `${formatCurrency(r.netProfit, sym)}  (${pct}%)`;
+      },
       deltaFn: (r, b) => r.netProfit - b.netProfit,
-    },
-    {
-      label: 'Margin',
-      format: (r) => `${r.margin.toFixed(1)}%`,
-      deltaFn: (r, b) => r.margin - b.margin,
     },
   ];
 
@@ -421,9 +422,7 @@ function ComparisonTable({
                           color: delta > 0 ? 'var(--accent-green)' : 'var(--danger)',
                         }}>
                           {delta > 0 ? '+' : ''}
-                          {row.label === 'Margin'
-                            ? `${delta.toFixed(1)}pp`
-                            : formatCurrency(delta, sym)}
+                          {formatCurrency(delta, sym)}
                         </div>
                       )}
                     </td>
@@ -509,12 +508,12 @@ const tdValueStyle: React.CSSProperties = {
 
 /* Waterfall breakdown for current state (no scenarios added yet) */
 function WaterfallBreakdown({ result, sym }: { result: SimulationResult; sym: string }) {
+  const rev = result.totalRevenue;
   const items = [
     { label: 'Revenue', value: result.totalRevenue, type: 'total' as const },
     { label: 'COGS', value: -result.totalCOGS, type: 'cost' as const },
     { label: 'Transport', value: -result.totalTransport, type: 'cost' as const },
     ...result.overheadCosts.map((c) => ({ label: c.name, value: -c.value, type: 'cost' as const })),
-    { label: 'Tax', value: -result.tax, type: 'cost' as const },
     { label: 'Net Profit', value: result.netProfit, type: 'result' as const },
   ].filter((item) => item.value !== 0);
 
@@ -525,6 +524,7 @@ function WaterfallBreakdown({ result, sym }: { result: SimulationResult; sym: st
       {items.map((item, i) => {
         const width = (Math.abs(item.value) / maxVal) * 100;
         const isPositive = item.value >= 0;
+        const pctOfRev = rev > 0 ? (Math.abs(item.value) / rev) * 100 : 0;
         const color = item.type === 'total'
           ? 'var(--border)'
           : item.type === 'result'
@@ -537,14 +537,27 @@ function WaterfallBreakdown({ result, sym }: { result: SimulationResult; sym: st
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 {item.label}
               </span>
-              <span style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.6875rem',
-                fontWeight: 500,
-                color: item.type === 'cost' ? 'var(--text-muted)' : (isPositive ? 'var(--accent-green)' : 'var(--danger)'),
-              }}>
-                {item.value < 0 ? '-' : ''}{formatCurrency(Math.abs(item.value), sym)}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                {item.type !== 'total' && (
+                  <span style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.5625rem',
+                    color: 'var(--text-faint)',
+                  }}>
+                    {pctOfRev.toFixed(1)}%
+                  </span>
+                )}
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.6875rem',
+                  fontWeight: 500,
+                  color: item.type === 'cost' ? 'var(--text-muted)' : (isPositive ? 'var(--accent-green)' : 'var(--danger)'),
+                  minWidth: 70,
+                  textAlign: 'right',
+                }}>
+                  {item.value < 0 ? '-' : ''}{formatCurrency(Math.abs(item.value), sym)}
+                </span>
+              </div>
             </div>
             <div style={{ height: 6, background: 'var(--border-subtle)' }}>
               <div style={{

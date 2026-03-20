@@ -26,16 +26,6 @@ export function TopBar({ onExport, onImport }: TopBarProps) {
       <div className="flex items-center gap-2">
         <button className="btn btn--ghost" onClick={onImport}>Import</button>
         <button className="btn btn--ghost" onClick={onExport}>Export</button>
-        <span style={{ width: 1, height: 14, background: 'var(--border)', margin: '0 4px' }} />
-        <a
-          href="https://yuann.cc"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="label-mono"
-          style={{ textDecoration: 'none', color: 'var(--text-faint)', fontSize: '0.5625rem' }}
-        >
-          yuann.cc
-        </a>
       </div>
     </header>
   );

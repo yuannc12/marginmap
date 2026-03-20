@@ -1,10 +1,6 @@
 import type { Product, Settings, Scenario, SimulationResult, ProductResult, SankeyNode, SankeyLink } from '../types';
 
-function resolveCost(value: number, mode: 'percent' | 'dollar', reference: number): number {
-  return mode === 'percent' ? reference * (value / 100) : value;
-}
-
-function getOverrideForProduct(scenario: Scenario, productId: string): { priceAdjustment: number; priceAdjustMode: 'percent' | 'dollar'; sellThrough: number } {
+function getOverrideForProduct(scenario: Scenario, productId: string): { priceAdjustment: number; priceAdjustMode: 'percent' | 'dollar'; sellThrough: number | null } {
   const override = scenario.productOverrides?.find((o) => o.productId === productId);
   if (override) return override;
   return { priceAdjustment: scenario.priceAdjustment, priceAdjustMode: scenario.priceAdjustMode, sellThrough: scenario.sellThrough };
@@ -25,18 +21,18 @@ export function simulate(
       adjustedPrice = p.pricePerUnit + params.priceAdjustment;
     }
 
-    const unitsSold = Math.round(p.quantity * (params.sellThrough / 100));
+    // Use product baseline sell-through, scenario can override it
+    const sellThrough = params.sellThrough ?? (p.sellThrough ?? 100);
+    const unitsSold = Math.round(p.quantity * (sellThrough / 100));
     const revenue = adjustedPrice * unitsSold;
 
-    const cogsPerUnit = resolveCost(p.cogs, p.cogsMode, adjustedPrice);
-    const transportPerUnit = resolveCost(p.transportation, p.transportMode, adjustedPrice);
-
-    const cogsTotal = cogsPerUnit * unitsSold;
-    const transportTotal = transportPerUnit * unitsSold;
+    // All costs are $ per unit
+    const cogsTotal = p.cogs * unitsSold;
+    const transportTotal = p.transportation * unitsSold;
 
     let otherCostsTotal = 0;
     for (const c of p.otherCosts) {
-      otherCostsTotal += resolveCost(c.value, c.mode, revenue);
+      otherCostsTotal += c.value * unitsSold;
     }
 
     const grossProfit = revenue - cogsTotal - transportTotal - otherCostsTotal;
@@ -60,18 +56,14 @@ export function simulate(
   const totalProductOther = productResults.reduce((s, r) => s + r.otherCostsTotal, 0);
   const grossProfit = totalRevenue - totalCOGS - totalTransport - totalProductOther;
 
-  // All overhead costs from the unified list
+  // Overhead costs are flat $ amounts
   const overheadCosts = settings.overheadCosts.map((c) => ({
     name: c.name,
-    value: resolveCost(c.value, c.mode, totalRevenue),
+    value: c.value,
   }));
   const totalOverhead = overheadCosts.reduce((s, c) => s + c.value, 0);
 
-  const preTaxProfit = grossProfit - totalOverhead;
-  const tax = preTaxProfit > 0
-    ? resolveCost(settings.taxRate, settings.taxMode, preTaxProfit)
-    : 0;
-  const netProfit = preTaxProfit - tax;
+  const netProfit = grossProfit - totalOverhead;
   const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
   return {
@@ -84,8 +76,6 @@ export function simulate(
     grossProfit,
     overheadCosts,
     totalOverhead,
-    preTaxProfit,
-    tax,
     netProfit,
     margin,
   };
@@ -99,7 +89,6 @@ const PALETTE = {
   cogs: '#9A9A9A',       // neutral gray
   transport: '#B0AFAB',  // mid gray
   net: '#8BC4A0',        // green (profit should read as positive)
-  tax: '#D4C4BB',        // warm beige
   overhead: '#B0AFAB',   // warm gray
   cost: '#B0AFAB',       // mid gray
 };
@@ -132,10 +121,6 @@ export function buildSankeyData(
   const netIdx = nodes.length;
   nodes.push({ name: 'Net Profit', color: PALETTE.net });
 
-  // Tax
-  const taxIdx = nodes.length;
-  nodes.push({ name: 'Tax', color: PALETTE.tax });
-
   // Overhead cost nodes (one per entry)
   const overheadStartIdx = nodes.length;
   result.overheadCosts.forEach((c) => {
@@ -163,11 +148,6 @@ export function buildSankeyData(
   // Gross Profit → Net Profit
   if (result.netProfit > 0) {
     links.push({ source: grossIdx, target: netIdx, value: result.netProfit, color: PALETTE.net });
-  }
-
-  // Gross Profit → Tax
-  if (result.tax > 0) {
-    links.push({ source: grossIdx, target: taxIdx, value: result.tax, color: PALETTE.tax });
   }
 
   // Gross Profit → each overhead cost

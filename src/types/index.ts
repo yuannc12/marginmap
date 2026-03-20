@@ -1,8 +1,7 @@
 export interface CostEntry {
   id: string;
   name: string;
-  value: number;
-  mode: 'percent' | 'dollar';
+  value: number; // always $ per unit (products) or $ flat (overhead)
 }
 
 export interface Product {
@@ -11,18 +10,14 @@ export interface Product {
   description: string;
   pricePerUnit: number;
   quantity: number;
-  cogs: number;
-  cogsMode: 'percent' | 'dollar';
-  transportation: number;
-  transportMode: 'percent' | 'dollar';
+  sellThrough: number; // 0-100% — expected baseline sell-through
+  cogs: number; // $ per unit
+  transportation: number; // $ per unit
   otherCosts: CostEntry[];
 }
 
 export interface Settings {
-  taxRate: number;
-  taxMode: 'percent' | 'dollar';
   overheadCosts: CostEntry[];
-  currency: string;
 }
 
 export interface ProductOverride {
@@ -35,11 +30,9 @@ export interface ProductOverride {
 export interface Scenario {
   id: string;
   name: string;
-  // Global defaults (applied to products without an override)
   priceAdjustment: number;
   priceAdjustMode: 'percent' | 'dollar';
   sellThrough: number; // 0-100%
-  // Per-product overrides
   productOverrides: ProductOverride[];
 }
 
@@ -64,8 +57,6 @@ export interface SimulationResult {
   grossProfit: number;
   overheadCosts: { name: string; value: number }[];
   totalOverhead: number;
-  preTaxProfit: number;
-  tax: number;
   netProfit: number;
   margin: number;
 }
@@ -90,53 +81,57 @@ export interface AppState {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  taxRate: 21,
-  taxMode: 'percent',
   overheadCosts: [
-    { id: 'ops', name: 'Operations', value: 2000, mode: 'dollar' },
-    { id: 'mkt', name: 'Marketing', value: 500, mode: 'dollar' },
-    { id: 'rent', name: 'Office Rental', value: 1000, mode: 'dollar' },
-    { id: 'tools', name: 'Digital Tools', value: 300, mode: 'dollar' },
+    { id: 'roast', name: 'Roastery Lease', value: 1800 },
+    { id: 'labor', name: 'Part-time Staff', value: 2400 },
+    { id: 'mkt', name: 'Social & Ads', value: 650 },
+    { id: 'platform', name: 'Shopify + Tools', value: 180 },
+    { id: 'ins', name: 'Insurance', value: 220 },
   ],
-  currency: 'EUR',
 };
 
 export const SAMPLE_PRODUCTS: Product[] = [
   {
     id: '1',
-    name: 'Black Box S',
-    description: 'Compact starter kit',
-    pricePerUnit: 120,
-    quantity: 100,
-    cogs: 30,
-    cogsMode: 'dollar',
-    transportation: 0,
-    transportMode: 'dollar',
-    otherCosts: [],
+    name: 'House Blend 250g',
+    description: 'Everyday medium roast — high volume, low margin',
+    pricePerUnit: 12.5,
+    quantity: 500,
+    sellThrough: 95,
+    cogs: 3.2,
+    transportation: 1.1,
+    otherCosts: [
+      { id: 'label1', name: 'Label & Bag', value: 0.45 },
+    ],
   },
   {
     id: '2',
-    name: 'Black Box M',
-    description: 'Standard edition',
-    pricePerUnit: 200,
-    quantity: 80,
-    cogs: 50,
-    cogsMode: 'dollar',
-    transportation: 10,
-    transportMode: 'dollar',
-    otherCosts: [],
+    name: 'Single Origin Ethiopia',
+    description: 'Specialty Yirgacheffe — premium, seasonal availability',
+    pricePerUnit: 18.9,
+    quantity: 200,
+    sellThrough: 80,
+    cogs: 6.8,
+    transportation: 1.1,
+    otherCosts: [
+      { id: 'label2', name: 'Label & Bag', value: 0.45 },
+      { id: 'card2', name: 'Tasting Card', value: 0.3 },
+    ],
   },
   {
     id: '3',
-    name: 'Black Box XL',
-    description: 'Premium bundle',
-    pricePerUnit: 450,
-    quantity: 40,
-    cogs: 120,
-    cogsMode: 'dollar',
-    transportation: 25,
-    transportMode: 'dollar',
-    otherCosts: [],
+    name: 'Discovery Gift Set',
+    description: '3x100g tins + brew guide — high margin, gift market',
+    pricePerUnit: 39.5,
+    quantity: 80,
+    sellThrough: 65,
+    cogs: 9.5,
+    transportation: 3.2,
+    otherCosts: [
+      { id: 'tin3', name: 'Tin Packaging', value: 2.8 },
+      { id: 'guide3', name: 'Brew Guide Insert', value: 0.6 },
+      { id: 'box3', name: 'Gift Box', value: 1.5 },
+    ],
   },
 ];
 
@@ -148,8 +143,4 @@ export const EMPTY_OVERRIDE: Omit<ProductOverride, 'productId'> = {
   sellThrough: 100,
 };
 
-export const CURRENCY_SYMBOLS: Record<string, string> = {
-  EUR: '\u20AC',
-  USD: '$',
-  GBP: '\u00A3',
-};
+export const SYM = '$';

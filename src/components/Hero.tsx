@@ -36,16 +36,6 @@ export function Hero({ onStart }: HeroProps) {
         >
           Pricing & Margin Analysis
         </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.5rem',
-            letterSpacing: '0.1em',
-            color: 'var(--text-faint)',
-          }}
-        >
-          yuann.cc
-        </span>
       </div>
 
       {/* Row 2, Col 1-2: Main title area */}
@@ -164,7 +154,7 @@ export function Hero({ onStart }: HeroProps) {
             margin: 0,
           }}
         >
-          Map your product costs, simulate pricing scenarios, and see where every euro flows.
+          Map your product costs, simulate pricing scenarios, and see where every dollar flows.
         </p>
         <div
           style={{

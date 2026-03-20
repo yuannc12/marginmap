@@ -1,6 +1,5 @@
-import { ModeToggle } from './ModeToggle';
 import type { Product, Settings, CostEntry } from '../types';
-import { CURRENCY_SYMBOLS } from '../types';
+import { SYM } from '../types';
 
 interface ProductCardsProps {
   products: Product[];
@@ -17,15 +16,14 @@ const EMPTY_PRODUCT: Omit<Product, 'id'> = {
   description: '',
   pricePerUnit: 0,
   quantity: 0,
+  sellThrough: 100,
   cogs: 0,
-  cogsMode: 'dollar',
   transportation: 0,
-  transportMode: 'dollar',
   otherCosts: [],
 };
 
 export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, onAddCost, onRemoveCost }: ProductCardsProps) {
-  const sym = CURRENCY_SYMBOLS[settings.currency] || settings.currency;
+  const sym = SYM;
 
   return (
     <section className="section">
@@ -34,8 +32,9 @@ export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, on
           <div>
             <div className="section-label">02</div>
             <div className="section-title">Products</div>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0, maxWidth: 400 }}>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0, maxWidth: 460 }}>
               Add your products with pricing, quantities, and per-unit costs.
+              Sell-through is the % of stock you expect to actually sell.
             </p>
           </div>
           <button className="btn btn--primary" onClick={() => onAdd(EMPTY_PRODUCT)}>
@@ -75,7 +74,7 @@ export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, on
               </div>
 
               {/* Fields */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 20 }}>
                 {/* Price */}
                 <div className="field">
                   <div className="field-label">Price / Unit</div>
@@ -92,9 +91,9 @@ export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, on
                   </div>
                 </div>
 
-                {/* Quantity */}
+                {/* Stock Qty */}
                 <div className="field">
-                  <div className="field-label">Quantity</div>
+                  <div className="field-label">Stock Qty</div>
                   <input
                     type="number"
                     value={product.quantity || ''}
@@ -104,45 +103,51 @@ export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, on
                   />
                 </div>
 
+                {/* Sell-Through */}
+                <div className="field">
+                  <div className="field-label">Sell-Through</div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={product.sellThrough ?? 100}
+                      onChange={(e) => onUpdate(product.id, { sellThrough: Math.min(100, Math.max(0, Number(e.target.value))) })}
+                      min={0}
+                      max={100}
+                      style={{ width: '100%', paddingRight: 24 }}
+                    />
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: '0.75rem' }}>%</span>
+                  </div>
+                </div>
+
                 {/* COGS */}
                 <div className="field">
-                  <div className="field-label">COGS</div>
-                  <div className="field-row">
-                    <div className="relative" style={{ flex: 1 }}>
-                      {product.cogsMode === 'dollar' && (
-                        <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: '0.75rem' }}>{sym}</span>
-                      )}
-                      <input
-                        type="number"
-                        value={product.cogs || ''}
-                        onChange={(e) => onUpdate(product.id, { cogs: Number(e.target.value) })}
-                        min={0}
-                        step={0.01}
-                        style={{ width: '100%', paddingLeft: product.cogsMode === 'dollar' ? 22 : 10 }}
-                      />
-                    </div>
-                    <ModeToggle mode={product.cogsMode} onChange={(m) => onUpdate(product.id, { cogsMode: m })} />
+                  <div className="field-label">COGS / Unit</div>
+                  <div className="relative">
+                    <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: '0.75rem' }}>{sym}</span>
+                    <input
+                      type="number"
+                      value={product.cogs || ''}
+                      onChange={(e) => onUpdate(product.id, { cogs: Number(e.target.value) })}
+                      min={0}
+                      step={0.01}
+                      style={{ width: '100%', paddingLeft: 22 }}
+                    />
                   </div>
                 </div>
 
                 {/* Transportation */}
                 <div className="field">
-                  <div className="field-label">Transport</div>
-                  <div className="field-row">
-                    <div className="relative" style={{ flex: 1 }}>
-                      {product.transportMode === 'dollar' && (
-                        <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: '0.75rem' }}>{sym}</span>
-                      )}
-                      <input
-                        type="number"
-                        value={product.transportation || ''}
-                        onChange={(e) => onUpdate(product.id, { transportation: Number(e.target.value) })}
-                        min={0}
-                        step={0.01}
-                        style={{ width: '100%', paddingLeft: product.transportMode === 'dollar' ? 22 : 10 }}
-                      />
-                    </div>
-                    <ModeToggle mode={product.transportMode} onChange={(m) => onUpdate(product.id, { transportMode: m })} />
+                  <div className="field-label">Transport / Unit</div>
+                  <div className="relative">
+                    <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: '0.75rem' }}>{sym}</span>
+                    <input
+                      type="number"
+                      value={product.transportation || ''}
+                      onChange={(e) => onUpdate(product.id, { transportation: Number(e.target.value) })}
+                      min={0}
+                      step={0.01}
+                      style={{ width: '100%', paddingLeft: 22 }}
+                    />
                   </div>
                 </div>
               </div>
@@ -150,7 +155,7 @@ export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, on
               {/* Other Costs */}
               {product.otherCosts.length > 0 && (
                 <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
-                  <div className="field-label" style={{ marginBottom: 8 }}>Other Costs</div>
+                  <div className="field-label" style={{ marginBottom: 8 }}>Other Costs <span style={{ fontWeight: 400, color: 'var(--text-faint)' }}>({sym} per unit)</span></div>
                   {product.otherCosts.map((cost) => (
                     <div key={cost.id} className="cost-row">
                       <input
@@ -165,24 +170,28 @@ export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, on
                         placeholder="Cost name"
                         style={{ flex: 1, border: 'none', background: 'transparent', padding: 0, fontSize: '0.8125rem' }}
                       />
-                      <input
-                        type="number"
-                        value={cost.value || ''}
-                        onChange={(e) => {
-                          const updated = product.otherCosts.map((c) =>
-                            c.id === cost.id ? { ...c, value: Number(e.target.value) } : c
-                          );
-                          onUpdate(product.id, { otherCosts: updated });
-                        }}
-                        min={0}
-                        style={{ width: 80, fontSize: '0.8125rem' }}
-                      />
+                      <div className="relative">
+                        <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: '0.75rem' }}>{sym}</span>
+                        <input
+                          type="number"
+                          value={cost.value || ''}
+                          onChange={(e) => {
+                            const updated = product.otherCosts.map((c) =>
+                              c.id === cost.id ? { ...c, value: Number(e.target.value) } : c
+                            );
+                            onUpdate(product.id, { otherCosts: updated });
+                          }}
+                          min={0}
+                          step={0.01}
+                          style={{ width: 90, fontSize: '0.8125rem', paddingLeft: 22 }}
+                        />
+                      </div>
                       <button
                         className="btn--danger"
                         onClick={() => onRemoveCost(product.id, cost.id)}
                         style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', cursor: 'pointer', background: 'none', border: 'none' }}
                       >
-                        ×
+                        x
                       </button>
                     </div>
                   ))}
@@ -192,7 +201,7 @@ export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, on
               <div style={{ marginTop: 12 }}>
                 <button
                   className="btn btn--ghost"
-                  onClick={() => onAddCost(product.id, { name: '', value: 0, mode: 'dollar' })}
+                  onClick={() => onAddCost(product.id, { name: '', value: 0 })}
                   style={{ fontSize: '0.5625rem' }}
                 >
                   + Add cost

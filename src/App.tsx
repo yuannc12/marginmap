@@ -57,7 +57,71 @@ export default function App() {
     <div style={{ minHeight: '100vh' }}>
       <Hero onStart={scrollToMain} />
 
-      <div ref={mainRef}>
+      {/* Story intro */}
+      <section
+        ref={mainRef}
+        className="page-shell"
+        style={{
+          padding: '80px 24px 64px',
+          maxWidth: 640,
+          margin: '0 auto',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.5625rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'var(--text-faint)',
+            display: 'block',
+            marginBottom: 20,
+          }}
+        >
+          The Problem
+        </span>
+        <p
+          style={{
+            fontSize: '1.125rem',
+            lineHeight: 1.75,
+            color: 'var(--text-muted)',
+            fontFamily: 'var(--font-body)',
+            margin: '0 0 20px',
+          }}
+        >
+          <strong style={{ color: 'var(--text-primary)' }}>Sara runs a specialty coffee roastery.</strong>{' '}
+          Three products, five overhead lines, and a pricing gut feel that keeps her up at night.
+          Her house blend moves fast but the margin is razor-thin. Her gift sets have real margin
+          but she has no idea how many she needs to sell to cover the roastery lease.
+        </p>
+        <p
+          style={{
+            fontSize: '1.125rem',
+            lineHeight: 1.75,
+            color: 'var(--text-muted)',
+            fontFamily: 'var(--font-body)',
+            margin: '0 0 20px',
+          }}
+        >
+          She tried spreadsheets — but every time she changed a price she had to rewire
+          three tabs. What she really needed was a way to see the full picture:{' '}
+          <em>what happens to my net profit if I raise the single-origin 15% but sell-through drops?</em>
+        </p>
+        <p
+          style={{
+            fontSize: '0.875rem',
+            lineHeight: 1.7,
+            color: 'var(--text-faint)',
+            fontFamily: 'var(--font-body)',
+            margin: 0,
+          }}
+        >
+          MarginMap is built for founders like Sara. Plug in your products, see the money flow,
+          run scenarios, and make pricing decisions with your eyes open.
+        </p>
+      </section>
+
+      <div>
         <TopBar onExport={handleExport} onImport={handleImport} />
 
         {importError && (

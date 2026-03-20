@@ -1,6 +1,6 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import type { Product, Settings, Scenario } from '../types';
-import { CURRENCY_SYMBOLS } from '../types';
+import { SYM } from '../types';
 import { simulate, buildSankeyData, formatCurrency } from '../utils/calculations';
 
 interface SankeyChartProps {
@@ -32,7 +32,7 @@ interface LayoutLink {
 }
 
 export function SankeyChart({ products, settings, scenarios }: SankeyChartProps) {
-  const sym = CURRENCY_SYMBOLS[settings.currency] || settings.currency;
+  const sym = SYM;
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 480 });
@@ -42,7 +42,7 @@ export function SankeyChart({ products, settings, scenarios }: SankeyChartProps)
     name: 'Current',
     priceAdjustment: 0,
     priceAdjustMode: 'percent' as const,
-    sellThrough: 100,
+    sellThrough: null as unknown as number, // use product baseline
     productOverrides: [],
   };
   const result = useMemo(() => simulate(products, settings, activeScenario), [products, settings, activeScenario]);
@@ -262,7 +262,10 @@ export function SankeyChart({ products, settings, scenarios }: SankeyChartProps)
                   stroke={link.color}
                   strokeWidth={0.5}
                   strokeOpacity={0.2}
-                  onMouseEnter={(e) => setTooltip({ x: e.clientX, y: e.clientY, text: formatCurrency(link.value, sym) })}
+                  onMouseEnter={(e) => {
+                    const pct = result.totalRevenue > 0 ? ((link.value / result.totalRevenue) * 100).toFixed(1) : '0.0';
+                    setTooltip({ x: e.clientX, y: e.clientY, text: `${formatCurrency(link.value, sym)}  (${pct}%)` });
+                  }}
                   onMouseLeave={() => setTooltip(null)}
                   style={{ cursor: 'pointer', transition: 'fill-opacity 0.15s' }}
                   onMouseOver={(e) => { e.currentTarget.style.fillOpacity = '0.85'; }}
@@ -272,8 +275,15 @@ export function SankeyChart({ products, settings, scenarios }: SankeyChartProps)
             })}
 
             {/* Nodes */}
-            {layoutNodes.map((node, i) => (
-              node.height > 0 && (
+            {layoutNodes.map((node, i) => {
+              const rev = result.totalRevenue;
+              const pct = rev > 0 ? ((node.value / rev) * 100).toFixed(1) : '0.0';
+              const isRevenue = node.name === 'Revenue';
+              const labelX = node.column <= 1 ? node.x + node.width + 8 : node.x - 8;
+              const anchor = node.column <= 1 ? 'start' : 'end';
+              const baseY = node.y + Math.min(node.height / 2, 16);
+
+              return node.height > 0 && (
                 <g key={i}>
                   <rect
                     x={node.x}
@@ -283,35 +293,31 @@ export function SankeyChart({ products, settings, scenarios }: SankeyChartProps)
                     fill={node.color}
                     onMouseEnter={(e) => {
                       const label = node.name === 'COGS' ? 'COGS (Cost of Goods Sold)' : node.name;
-                      setTooltip({ x: e.clientX, y: e.clientY, text: `${label}: ${formatCurrency(node.value, sym)}` });
+                      const pctTip = isRevenue ? '' : ` (${pct}% of revenue)`;
+                      setTooltip({ x: e.clientX, y: e.clientY, text: `${label}: ${formatCurrency(node.value, sym)}${pctTip}` });
                     }}
                     onMouseLeave={() => setTooltip(null)}
                     style={{ cursor: 'pointer' }}
                   />
-                  {/* Label: right side for columns 0-1, left side for columns 2-3 */}
+                  {/* Name */}
                   <text
-                    x={node.column <= 1 ? node.x + node.width + 8 : node.x - 8}
-                    y={node.y + Math.min(node.height / 2, 16)}
-                    dy="0.35em"
-                    textAnchor={node.column <= 1 ? 'start' : 'end'}
+                    x={labelX} y={baseY} dy="0.35em" textAnchor={anchor}
                     fill="rgba(255,255,255,0.85)"
                     style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '0.04em', fontWeight: 500 }}
                   >
                     {node.name}
                   </text>
+                  {/* Dollar amount + % of revenue */}
                   <text
-                    x={node.column <= 1 ? node.x + node.width + 8 : node.x - 8}
-                    y={node.y + Math.min(node.height / 2, 16) + 13}
-                    dy="0.35em"
-                    textAnchor={node.column <= 1 ? 'start' : 'end'}
+                    x={labelX} y={baseY + 13} dy="0.35em" textAnchor={anchor}
                     fill="rgba(255,255,255,0.45)"
                     style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.04em' }}
                   >
-                    {formatCurrency(node.value, sym)}
+                    {formatCurrency(node.value, sym)}{!isRevenue && node.column > 0 ? `  ${pct}%` : ''}
                   </text>
                 </g>
-              )
-            ))}
+              );
+            })}
           </svg>
 
           {tooltip && (
