@@ -58,7 +58,7 @@ export function ScenarioBuilder({
   return (
     <section className="section">
       <div className="page-shell">
-        <div className="flex items-baseline justify-between" style={{ marginBottom: 32 }}>
+        <div className="flex items-baseline justify-between section-header-responsive" style={{ marginBottom: 32 }}>
           <div>
             <div className="section-label">04</div>
             <div className="section-title">Scenarios</div>
@@ -75,9 +75,9 @@ export function ScenarioBuilder({
         {scenarios.length > 0 && (
           <div
             className="motion-stagger"
+            className="scenario-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${Math.min(scenarios.length, 2)}, 1fr)`,
               gap: 16,
               marginBottom: 24,
             }}

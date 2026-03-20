@@ -183,7 +183,15 @@ export default function App() {
           }}
         >
           <span style={{ color: 'var(--text-faint)', fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-            MarginMap by yuann.cc
+            MarginMap by{' '}
+            <a
+              href="https://yuann.cc"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
+              yuann.cc
+            </a>
           </span>
           <button
             className="btn btn--outline"

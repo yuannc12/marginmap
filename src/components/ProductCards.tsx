@@ -27,7 +27,7 @@ export function ProductCards({ products, onAdd, onUpdate, onDelete, onAddCost, o
   return (
     <section className="section">
       <div className="page-shell">
-        <div className="flex items-baseline justify-between" style={{ marginBottom: 32 }}>
+        <div className="flex items-baseline justify-between section-header-responsive" style={{ marginBottom: 32 }}>
           <div>
             <div className="section-label">02</div>
             <div className="section-title">Products</div>
@@ -73,7 +73,7 @@ export function ProductCards({ products, onAdd, onUpdate, onDelete, onAddCost, o
               </div>
 
               {/* Fields */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 20 }}>
+              <div className="product-fields">
                 {/* Price */}
                 <div className="field">
                   <div className="field-label">Price / Unit</div>

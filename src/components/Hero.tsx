@@ -5,10 +5,10 @@ interface HeroProps {
 export function Hero({ onStart }: HeroProps) {
   return (
     <section
+      className="hero-grid"
       style={{
         minHeight: '100vh',
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr 1fr',
         gridTemplateRows: 'auto 1fr 1fr auto',
         border: '1px solid var(--border)',
         background: 'var(--bg-primary)',
@@ -40,7 +40,7 @@ export function Hero({ onStart }: HeroProps) {
 
       {/* Row 2, Col 1-2: Main title area */}
       <div
-        className="motion-fade-up"
+        className="motion-fade-up hero-title"
         style={{
           gridColumn: '1 / 3',
           gridRow: '2 / 3',
@@ -69,8 +69,9 @@ export function Hero({ onStart }: HeroProps) {
         </h1>
       </div>
 
-      {/* Row 2, Col 3: Abstract geometric — orbital rings */}
+      {/* Row 2, Col 3: Abstract geometric — orbital rings (hidden on mobile) */}
       <div
+        className="hero-cell-hide-mobile"
         style={{
           gridColumn: '3 / 4',
           gridRow: '2 / 3',
@@ -91,8 +92,9 @@ export function Hero({ onStart }: HeroProps) {
         </svg>
       </div>
 
-      {/* Row 2, Col 4: Abstract geometric — warped grid */}
+      {/* Row 2, Col 4: Abstract geometric — warped grid (hidden on mobile) */}
       <div
+        className="hero-cell-hide-mobile"
         style={{
           gridColumn: '4 / 5',
           gridRow: '2 / 3',
@@ -105,7 +107,6 @@ export function Hero({ onStart }: HeroProps) {
         }}
       >
         <svg viewBox="0 0 100 100" width="70%" height="70%">
-          {/* Warped grid lines — horizontal */}
           {[20, 35, 50, 65, 80].map((y) => (
             <path
               key={`h${y}`}
@@ -116,7 +117,6 @@ export function Hero({ onStart }: HeroProps) {
               opacity="0.4"
             />
           ))}
-          {/* Warped grid lines — vertical */}
           {[20, 35, 50, 65, 80].map((x) => (
             <path
               key={`v${x}`}
@@ -166,12 +166,13 @@ export function Hero({ onStart }: HeroProps) {
             marginTop: 24,
           }}
         >
-          Revenue → Costs → Profit
+          Revenue &rarr; Costs &rarr; Profit
         </div>
       </div>
 
-      {/* Row 3, Col 2: Abstract geometric — flowing wave */}
+      {/* Row 3, Col 2: Abstract geometric — flowing wave (hidden on mobile, CTA takes its place) */}
       <div
+        className="hero-cell-hide-mobile"
         style={{
           gridColumn: '2 / 3',
           gridRow: '3 / 4',
@@ -199,7 +200,7 @@ export function Hero({ onStart }: HeroProps) {
 
       {/* Row 3, Col 3: CTA button */}
       <div
-        className="motion-fade-up"
+        className="motion-fade-up hero-cta"
         style={{
           gridColumn: '3 / 4',
           gridRow: '3 / 4',
@@ -226,8 +227,9 @@ export function Hero({ onStart }: HeroProps) {
         </button>
       </div>
 
-      {/* Row 3, Col 4: Abstract geometric — concentric diamond */}
+      {/* Row 3, Col 4: Abstract geometric — concentric diamond (hidden on mobile) */}
       <div
+        className="hero-cell-hide-mobile"
         style={{
           gridColumn: '4 / 5',
           gridRow: '3 / 4',
