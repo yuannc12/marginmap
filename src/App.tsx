@@ -149,7 +149,6 @@ export default function App() {
 
         <ProductCards
           products={store.products}
-          settings={store.settings}
           onAdd={store.addProduct}
           onUpdate={store.updateProduct}
           onDelete={store.deleteProduct}

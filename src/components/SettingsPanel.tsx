@@ -53,7 +53,7 @@ export function SettingsPanel({ settings, onAddCost, onUpdateCost, onRemoveCost 
 
           <button
             className="btn btn--ghost"
-            onClick={() => onAddCost({ name: '', value: 0, mode: 'dollar' })}
+            onClick={() => onAddCost({ name: '', value: 0 })}
             style={{ marginTop: 8, fontSize: '0.5625rem' }}
           >
             + Add overhead cost

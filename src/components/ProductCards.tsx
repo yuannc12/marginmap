@@ -1,9 +1,8 @@
-import type { Product, Settings, CostEntry } from '../types';
+import type { Product, CostEntry } from '../types';
 import { SYM } from '../types';
 
 interface ProductCardsProps {
   products: Product[];
-  settings: Settings;
   onAdd: (product: Omit<Product, 'id'>) => void;
   onUpdate: (id: string, updates: Partial<Product>) => void;
   onDelete: (id: string) => void;
@@ -22,7 +21,7 @@ const EMPTY_PRODUCT: Omit<Product, 'id'> = {
   otherCosts: [],
 };
 
-export function ProductCards({ products, settings, onAdd, onUpdate, onDelete, onAddCost, onRemoveCost }: ProductCardsProps) {
+export function ProductCards({ products, onAdd, onUpdate, onDelete, onAddCost, onRemoveCost }: ProductCardsProps) {
   const sym = SYM;
 
   return (
