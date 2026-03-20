@@ -37,7 +37,14 @@ export function SankeyChart({ products, settings, scenarios }: SankeyChartProps)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 480 });
 
-  const activeScenario = scenarios[0];
+  const activeScenario = scenarios[0] ?? {
+    id: '__baseline__',
+    name: 'Current',
+    priceAdjustment: 0,
+    priceAdjustMode: 'percent' as const,
+    sellThrough: 100,
+    productOverrides: [],
+  };
   const result = useMemo(() => simulate(products, settings, activeScenario), [products, settings, activeScenario]);
   const sankeyData = useMemo(() => buildSankeyData(result, products), [result, products]);
 
